@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<solr> 
+<param  ID='collection1'>http://localhost:8080/solr/collection1</param>
+<param ID='collection2'>http://localhost:8080/solr/collection2</param>
+</solr>

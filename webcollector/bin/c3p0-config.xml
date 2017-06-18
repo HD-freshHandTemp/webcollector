@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c3p0-config>
+    <!-- 这是默认配置信息 -->
+    <default-config> 
+        <!-- 连接四大参数配置 -->
+        <property name="jdbcUrl">jdbc:oracle:thin:@192.168.1.118:1521/orcl</property>
+        <property name="driverClass">oracle.jdbc.driver.OracleDriver</property>
+        <property name="user">scott</property>
+        <property name="password">1234</property>
+        <!-- 池参数配置 -->
+        <!--  #当连接池中的连接耗尽的时候c3p0一次同时获取的连接数  -->
+        <property name="acquireIncrement">100</property>
+        <property name="initialPoolSize">100</property><!-- //初始化连接池大小 -->
+        <property name="minPoolSize">10</property>
+        <property name="maxPoolSize">30</property>
+         
+      <!--  #两次连接中间隔时间，单位毫秒   -->
+   
+     
+       </default-config>
+    
+  
+    <!-- 专门为oracle提供的配置信息
+<named-config name="oracle-config"> 
+    <property>...</property>
+    
+    <property>...</property>
+</named-config>-->
+</c3p0-config>
