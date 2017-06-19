@@ -3,8 +3,8 @@ package webcollector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Ifchinese {//判断是否乱码
-	public boolean isMessyCode(String strName) {
+public class ChineseCharacterPhasing {//判断是否乱码
+	public static boolean isMessyCode(String strName) {
         Pattern p = Pattern.compile("\\s*|\t*|\r*|\n*");
         Matcher m = p.matcher(strName);
         String after = m.replaceAll("");
@@ -29,7 +29,7 @@ public class Ifchinese {//判断是否乱码
         }
     }
 	
-	private  boolean isChinese(char c) {
+	private static boolean isChinese(char c) {
         Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
         if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
                 || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS

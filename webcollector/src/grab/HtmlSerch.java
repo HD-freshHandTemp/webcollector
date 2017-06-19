@@ -11,7 +11,7 @@ import model.userInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import webcollector.HtmlCrawler;
+import webcollector.HtmlCrawlerBackup;
 import SolrConenction.ImportSolr;
 import Tool.JDBCUtils;
 import Tool.ReadURL;
@@ -29,7 +29,7 @@ public class HtmlSerch {
 //				Solrname = solrname;
 //			}
 //			System.out.println(999 + "------------------" + Solrname);
-			HtmlCrawler htmlCrawler = new HtmlCrawler(path, path);// path+"/crawl"
+			HtmlCrawlerBackup htmlCrawler = new HtmlCrawlerBackup(path, path);// path+"/crawl"
 			ReadURL readurl = new ReadURL();
 			List<String> urlall = readurl.readTxtFile();
 			if (urlall.size() > 0) {
