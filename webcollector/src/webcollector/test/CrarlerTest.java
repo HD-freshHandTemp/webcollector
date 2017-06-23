@@ -1,15 +1,14 @@
 package webcollector.test;
 
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jsoup.nodes.Element;
 import org.junit.Test;
 
-import cn.edu.hfut.dmic.contentextractor.ContentExtractor;
-import webcollector.HtmlCrawler;
-import webcollector.HtmlCrawlerBackup;
+import webcollector.CarlerUtils.CarlerInitializeUtils;
+import webcollector.Crawler.HtmlCrawler;
 
 public class CrarlerTest {
 	//自定义Logger
@@ -18,12 +17,47 @@ public class CrarlerTest {
 	Long end;//任务-结束时间
 	int count = 1;//任务-次数
 	
-	//爬虫基本测试
+	
+	//多线程高级爬虫测试
+    @Test
+    public void crawlerTest3() throws Exception {
+//    	int threadCount = 10;
+    	Vector<String> urls = new Vector<String>();
+    	begin = System.nanoTime();
+    	
+
+    	HtmlCrawler crawler = new HtmlCrawler("crawler", true);
+    	//初始化爬虫数据
+    	crawler.setBasePath(CarlerInitializeUtils.readBasePath());
+    	
+    	String[] targetURIList = CarlerInitializeUtils.getTargetURIList();
+    	for (String string : targetURIList) {
+    		urls.add(string);
+		}
+    	crawler.setURLs(urls);
+    	
+    	crawler.setHtmlPhasingModels(CarlerInitializeUtils.readModels());
+    	crawler.setKeyWords(CarlerInitializeUtils.readKeyWords());
+    	
+
+        crawler.addSeed(urls.get(0));
+
+        crawler.setThreads(30);
+        crawler.start(1);//?
+        
+        end = System.nanoTime();
+        
+        
+        Double time = (double) TimeUnit.MILLISECONDS.convert(end-begin,TimeUnit.NANOSECONDS)/1000;
+		System.out.println("任务耗时:"+time+"s  任务数:"+count+",  平均处理时间:"+time/count+"s");
+    }
+	
+	//CSS+正文处理+图片 爬虫测试
     @Test
     public void crawlerTest() throws Exception {
     	begin = System.nanoTime();
     	
-    	HtmlCrawlerTest crawler = new HtmlCrawlerTest("crawler", true);
+    	HTMLCrawlerTest crawler = new HTMLCrawlerTest("crawler", true);
         String targetUrl ="http://www.binzz.com/wenzhang/60224.html";
         logger.info("开始获取资源 From:"+targetUrl);
         crawler.addSeed(targetUrl);
@@ -38,22 +72,16 @@ public class CrarlerTest {
     }
     
 
-    //CSS+正文处理+图片 爬虫测试
+   //爬虫基本测试
     @Test
     public void crawlerTest2() throws Exception {
     	
     	begin = System.nanoTime();
     	
-    	HtmlCrawler crawler = new HtmlCrawler("crawler", true);
+    	HTMLCrawlerTest crawler = new HTMLCrawlerTest("crawler", true);
         String targetUrl ="http://www.binzz.com/wenzhang/60224.html";
         logger.info("开始获取资源 From:"+targetUrl);
         crawler.addSeed(targetUrl);
-//        crawler.addRegex("http://blog.csdn.net/.*/article/details/.*");
-
-        /*可以设置每个线程visit的间隔，这里是毫秒*/
-//        crawler.setVisitInterval(1000);
-        /*可以设置http请求重试的间隔，这里是毫秒*/
-//        crawler.setRetryInterval(1000);
 
         crawler.setThreads(30);
         crawler.start(2);

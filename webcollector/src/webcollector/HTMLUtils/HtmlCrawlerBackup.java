@@ -1,4 +1,4 @@
-package webcollector;
+package webcollector.HTMLUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,7 +27,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import grab.FileWrite;
-
 import cn.edu.hfut.dmic.contentextractor.ContentExtractor;
 import cn.edu.hfut.dmic.webcollector.model.CrawlDatum;
 import cn.edu.hfut.dmic.webcollector.model.CrawlDatums;
@@ -318,13 +317,12 @@ public class HtmlCrawlerBackup extends BreadthCrawler {
 			// System.out.println(" 内容进行过滤--------------"+url);
 			contents = Filtercontents(contentElement);// 对获取 内容进行过滤
 			// System.out.println("过滤以后的内容------------------"+Filtercontents(contentElement).length());
-			Ifchinese chinese = new Ifchinese();// 调用短短解析内容是否为乱码,以及对乱码的处理
-			if (chinese.isMessyCode(title) == true) {
+			if (ChineseCharacterPhasing.isMessyCode(title) == true) {
 				page.charset("GBK");
 				url = page.url();
 				title = page.doc().title();
 				contents = Filtercontents(contentElement);
-				if (chinese.isMessyCode(title) == true) {
+				if (ChineseCharacterPhasing.isMessyCode(title) == true) {
 					title = null;
 					contents = null;
 				}

@@ -1,4 +1,4 @@
-package webcollector;
+package webcollector.HTMLUtils;
 
 import info.monitorenter.cpdetector.io.ASCIIDetector;
 import info.monitorenter.cpdetector.io.ByteOrderMarkDetector;

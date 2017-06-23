@@ -11,7 +11,7 @@ import model.userInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import webcollector.HtmlCrawlerBackup;
+import webcollector.HTMLUtils.HtmlCrawlerBackup;
 import SolrConenction.ImportSolr;
 import Tool.JDBCUtils;
 import Tool.ReadURL;

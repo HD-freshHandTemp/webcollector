@@ -1,4 +1,4 @@
-package webcollector;
+package webcollector.test;
 
 
 import java.io.UnsupportedEncodingException;
@@ -17,10 +17,10 @@ import cn.edu.hfut.dmic.webcollector.model.CrawlDatums;
 import cn.edu.hfut.dmic.webcollector.model.Page;
 import cn.edu.hfut.dmic.webcollector.plugin.berkeley.BreadthCrawler;
 
-public class HtmlCrawler extends BreadthCrawler {
+public class HTMLCrawlerTest extends BreadthCrawler {
 	private final static Log logger = LogFactory.getLog("HtmlLogger");
 
-	public HtmlCrawler(String crawlPath, boolean autoParse) {
+	public HTMLCrawlerTest(String crawlPath, boolean autoParse) {
 		super(crawlPath, autoParse);
 
 		// 处理网页证书问题

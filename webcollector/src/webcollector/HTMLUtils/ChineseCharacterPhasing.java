@@ -1,4 +1,4 @@
-package webcollector;
+package webcollector.HTMLUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

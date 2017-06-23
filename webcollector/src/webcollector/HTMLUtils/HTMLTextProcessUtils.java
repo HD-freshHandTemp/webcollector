@@ -1,4 +1,4 @@
-package webcollector.htmlUtils;
+package webcollector.HTMLUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -7,11 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -23,8 +24,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import webcollector.test.CrarlerTest;
-
+import webcollector.GeneralUtils.IsNullUtils;
+import webcollector.IOUtils.FileUtils;
 import cn.edu.hfut.dmic.webcollector.model.Page;
 
 /**
@@ -34,12 +35,33 @@ import cn.edu.hfut.dmic.webcollector.model.Page;
  *
  */
 public class HTMLTextProcessUtils {
-	private final static Log logger = LogFactory.getLog(CrarlerTest.class);
+	private final static Log logger = LogFactory.getLog(HTMLTextProcessUtils.class);
+	
+	/**
+	 * 检测关键字工具
+	 * @param keyWords 关键字数组
+	 * @param targetElement 目标网页元素
+	 * @return 是否包含关键字
+	 */
+	public static boolean checkingKeyWord(String[] keyWords,Element targetElement){
+		boolean isContainKeyword = false;
+		if(IsNullUtils.notNull(keyWords)){
+			for (String keyWord : keyWords) {
+				if (targetElement.text().contains(keyWord)) {
+					logger.info("找到关键字:"+keyWord);
+					isContainKeyword = true;
+					//评分系统可以在这里添加
+					break;
+				}
+			}
+		}
+		return isContainKeyword;
+	}
 	
 	
-	// 处理表格
+	
 	/*
-	 * 
+	 * 处理HTML表格
 	 */
 	public static Object ProcessHTMLTable() {
 		return null;
@@ -48,13 +70,13 @@ public class HTMLTextProcessUtils {
 
 	
 	/**
-	 * 下载并CSS替换为本地CSS资源
-	 * @param page
-	 * @param savePath
-	 * @return
-	 * @throws IOException 
+	 * 下载CSS并替换为本地CSS资源
+	 * @param cssElements 网页元素
+	 * @param url URL
+	 * @param basePath basePath+Domain 
+	 * @throws IOException
 	 */
-	public static void ProcessHTMLCSS(ArrayList<Element> cssElements,String url) throws IOException {
+	public static void ProcessHTMLCSS(ArrayList<Element> cssElements,String url,String basePath) throws IOException {
 		// 获取页面CSS
 		if (cssElements!=null&&cssElements.size() > 0) {
 
@@ -69,7 +91,7 @@ public class HTMLTextProcessUtils {
 				String cssName = href.substring(href.lastIndexOf("/") + 1, href.length());
 				logger.info("CSS文件名称:"+cssName);
 				if (cssName.indexOf(".css") == -1){
-					logger.info("非CSS文件,"+cssName+"已被移除");
+					logger.info("非CSS文件,"+cssName+"已被跳过");
 					cssElements.remove(i);
 					continue;
 				}
@@ -78,8 +100,6 @@ public class HTMLTextProcessUtils {
 				//构建css地址
 				//这里是临时处理,需要增加一个方法来判断,以匹配更多的网站类型
 				url = url.substring(0,url.lastIndexOf(".com")+4);
-				String dirPath = url.substring(url.lastIndexOf("www"),url.length());
-				logger.info("dirPath:"+dirPath);
 				href = url +href;
 				logger.info("目标CSS地址:"+href);
 				
@@ -95,21 +115,22 @@ public class HTMLTextProcessUtils {
 				cssText = document.text();
 				//检查是否空文件
 				if(cssText.length()<1){
-					logger.info("CSS文件内容为空,"+cssName+"已被移除");
+					logger.info("CSS文件内容为空,"+cssName+"已被跳过");
 					cssElements.remove(i);
 					continue;
 				}
 				
+				
 				//保存CSS
-				String localFilePath = "C:\\Users\\Mick Mo\\Desktop\\temp\\"+dirPath+"\\"+new Date().getTime()+cssName;
-				logger.info("dirPath:"+dirPath);
+				String localFilePath = "/"+basePath+"CSS/"+cssName;
 				logger.info("cssName:"+cssName);
 				logger.info("本地CSS路径:"+localFilePath);
-				String localCssURI = SaveFileUtils.saveGeneralFile(cssText.getBytes(charsetName),localFilePath);
+				logger.info("basePath:"+basePath);
+				URI localCssURI = FileUtils.saveBytesFile(cssText.getBytes(charsetName),localFilePath);
 				
 				//替换CSS
 				element.attr("href");
-				element.attr("href", localCssURI);
+				element.attr("href", localCssURI.toASCIIString());
 			}
 			logger.debug("CSS文件处理完毕");
 		}
@@ -120,62 +141,59 @@ public class HTMLTextProcessUtils {
 	 * 
 	 * @param imgall
 	 * @param savePath
+	 * @param basePath basePath + domain
 	 * @return
 	 */
-	public static Map<String, String> ProcessHTMLImage(Map<String, String> imgMap) {
-		if (imgMap!=null&&imgMap.size()>0) {
-			Map<String, String> filePathByType = new HashMap<String, String>();//后面根据properties文件读取该设置
+	public static void ProcessHTMLImage(Map<URL, URL>imgMap,String basePath) {
+		if (IsNullUtils.notNull(imgMap)) {
 			
-			//保存图片
-			//模拟读取properties
-			//BMP、JPG、JPEG、PNG、GIF
-			//<img alt="daria-nepriakhina-198549.jpg" src="http://www.binzz.com/uploads/allimg/170326/1A102K37-4.jpg" title="8716248178507445.jpg" />
-			filePathByType.put("img".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			filePathByType.put("BMP".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			filePathByType.put("JPG".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			filePathByType.put("JPEG".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			filePathByType.put("PNG".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			filePathByType.put("GIF".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\img");
-			
-			filePathByType.put("css".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\css");
-			filePathByType.put("html".toUpperCase(), "C:\\Users\\Mick Mo\\Desktop\\temp\\html");
-			
-			
-			String targetPath = null;//目标保存路径
-			
-			
+			//读取支持的图片格式
+			String[] supportImageTypr = FileUtils.readPropertiesBykey("supportImageTypr").split(",");
+			//全部转化成大写方便对比
+			String localtemp = "";
+			for (int i = 0; i < supportImageTypr.length; i++) {
+				supportImageTypr[i] = (supportImageTypr[i].trim()).toUpperCase();
+				localtemp +=supportImageTypr[i]+",";
+			}
+			logger.info("支持的图片格式有:"+localtemp.substring(0, localtemp.length()-1));
+
 			Map<String, String> localImgMap;
-			Set<Entry<String, String>> entrySet = imgMap.entrySet();
-			
+			logger.info("开始下载"+imgMap.size()+"个图片");
 			BufferedOutputStream bos = null;
 			FileOutputStream fos = null;
 			ByteArrayOutputStream outStream = null;
 			InputStream cin = null;
 			HttpURLConnection httpConn;
-
+			Set<Entry<URL, URL>> entrySet = imgMap.entrySet();
+			
 			try {
 				localImgMap = new HashMap<String, String>();
-				for (Entry<String, String> entry : entrySet) {
-					
-					String fileNameWithSubfix = entry.getKey();
+				for (Entry<URL, URL> entry : entrySet) {
+					URL url = entry.getKey();
+					String fileNameWithSubfix = url.getPath();
 					//后缀
 					logger.info("开始下载图片:"+fileNameWithSubfix);
-					String subfix = fileNameWithSubfix.substring(fileNameWithSubfix.lastIndexOf(".")+1, fileNameWithSubfix.length());
-					
-					//检查是否为支持的文件
-					
-					targetPath = filePathByType.get(subfix.toUpperCase());
-					logger.info("检查文件类型:"+subfix);
-					if(targetPath==null||targetPath.equals("")){
-						logger.info("不支持的文件类型");
-						return null;
+					String subfix = fileNameWithSubfix.substring(fileNameWithSubfix.lastIndexOf(".")+1, fileNameWithSubfix.length()).toUpperCase();
+					if(IsNullUtils.isNull(subfix)){
+						logger.info("无法获取图片文件后缀,跳过处理该图片.");
+						continue;
 					}
-					logger.info("本地保存路径:"+targetPath);
+					//检查是否为支持的文件
+					boolean localFlag =  false;
+					logger.info("检查文件类型:"+subfix);
+					for (String temp : supportImageTypr) {
+						if(temp.equals(subfix)){
+							localFlag = true;
+						}
+					}
+					if(!localFlag){
+						logger.info("不支持的文件类型:"+subfix+",跳过");
+						continue;
+					}
+					logger.info("本地保存路径:"+basePath);
 					
 					//下载图片
-					String urlValue = entry.getValue();
-					logger.info("图片URL:"+urlValue);
-					URL url = new URL(urlValue);
+					logger.info("图片URL:"+url);
 					httpConn = (HttpURLConnection) url.openConnection();
 					httpConn.setConnectTimeout(3000);
 					httpConn.setDoInput(true);
@@ -186,23 +204,7 @@ public class HTMLTextProcessUtils {
 					int responseCode = httpConn.getResponseCode();
 		            if(responseCode == 200){
 		            	logger.info("连接成功");
-						//如果响应为“200”，表示成功响应，则返回一个输入流
-//						cin = httpConn.getInputStream();
-//						//输出流到response中
-//						buffer = new byte[1024];// 给个1MB的缓存没问题
-//						int bytesWritten = 0;
-//						int byteCount = 0;
-//
-//						while ((byteCount = cin.read(buffer)) != -1) {
-//							outStream.write(buffer, bytesWritten, byteCount);
-//							bytesWritten+=byteCount;
-//						}
-//						cin.close();
-//						fileData = outStream.toByteArray();
-//						outStream.close();
-		            	
-		            	
-						
+		
 						cin = httpConn.getInputStream();
 						outStream = new ByteArrayOutputStream();
 						byte[] buffer = new byte[1024];
@@ -213,17 +215,20 @@ public class HTMLTextProcessUtils {
 						cin.close();
 						byte[] fileData = outStream.toByteArray();
 						outStream.close();
-//						
+						
+						
+						//构建层级目录
+
+				
 						//保存到本地
-						String filePath = targetPath + "\\" + subfix.toUpperCase() + new Date().getTime() + fileNameWithSubfix;
+						String filePath = basePath+"img/"+fileNameWithSubfix;
 						logger.info("保存图片:"+filePath);
-						String savedFileURI = SaveFileUtils.saveGeneralFile(fileData, filePath);
-						localImgMap.put(fileNameWithSubfix, savedFileURI);
+						URI savedFileURI = FileUtils.saveBytesFile(fileData, filePath);
+						entry.setValue(savedFileURI.toURL());
 					}else {
 						logger.info("获取图片资源失败....");
 					}
 				}
-				return localImgMap;
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -262,7 +267,6 @@ public class HTMLTextProcessUtils {
 				}
 			}
 		}
-		return null;
 	}
 
 	/**
@@ -281,28 +285,38 @@ public class HTMLTextProcessUtils {
 	 * @param charset
 	 * @return
 	 */
-	public static byte[] packagingHTML(Map<String, Object> htmlComponentMap,Charset charset){
+	public static byte[] packagingHTML(Map<String, Object> htmlComponentMap){
 //		htmlComponentMap.put("css", cssLInkElements);
 //		htmlComponentMap.put("summary", summaryElements.get(0));
 //		htmlComponentMap.put("title", titleElement);
 //		htmlComponentMap.put("content", contentElement);
 		
-		if(!htmlComponentMap.isEmpty()&&charset!=null){
+		if(!htmlComponentMap.isEmpty()){
+			logger.info("开始重新打包HTML...");
 			try {
 				StringBuffer htmlData = new StringBuffer();
 				Set<Entry<String, Object>> entrySet = htmlComponentMap.entrySet();
 				for (Entry<String, Object> entry : entrySet) {
 					String key = entry.getKey();
 					Object value = entry.getValue();
-					if(key.equals("css")){
+					if(key.equals("style")){
 						@SuppressWarnings("unchecked")
 						ArrayList<Element> elements = (ArrayList<Element>)value;
 						for (Element element : elements) {
-							htmlData.append(new String(element.html().getBytes(charset), "UTF-8"));
+							htmlData.append(element.html());
+							logger.info("添加"+key+"元素,长度:"+element.html().length());
+						}
+					}else if(key.equals("css")){
+						@SuppressWarnings("unchecked")
+						ArrayList<Element> elements = (ArrayList<Element>)value;
+						for (Element element : elements) {
+							htmlData.append(element.html());
+							logger.info("添加"+key+"元素,长度:"+element.html().length());
 						}
 					}
 					else if(key.equals("title")||key.equals("summary")||key.equals("content")){
-						htmlData.append(new String(((Element)value).html().getBytes(charset), "UTF-8"));
+						htmlData.append(((Element)value).html());
+						logger.info("添加"+key+"元素,长度:"+((Element)value).html().length());
 					}else {
 						logger.warn("无法识别的HTML结构:"+key+"  class:"+value.getClass());
 						continue;
