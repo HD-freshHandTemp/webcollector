@@ -381,22 +381,28 @@ public class FileUtils {
 		}
 		byte[] bytes = new byte[(inStream.available())];
 		inStream.read(bytes);
-		String string = new String(bytes,"UTF-8");
-		logger.info("文件原始信息:"+string);
-		if(string.contains("\\n")){
-			String[] split = string.split("\\n");
-			if (IsNullUtils.notNull(split)) {
-				return split;
-			}else {
-				return null;
+		if(bytes.length>0){
+			String string = new String(bytes,"UTF-8");
+			logger.info("尝试分割:"+string);
+			if(string.contains(System.getProperty("line.separator", "\n").toString())){
+				String[] split = string.split("[\\r\\n]+");
+				logger.info("分割后元素个数:"+split.length);
+				if (IsNullUtils.notNull(split)) {
+					logger.info("分割成功,分割后元素:"+split.length);
+					return split;
+				}else {
+					logger.info("分割后为空文件.");
+					return null;
+				}
+			}else{
+				logger.info("没有发现分割符,直接返回");
+				String[] temp = new String[(1)];
+				temp[0] = string;
+				return temp;
 			}
 		}else{
-			String[] temp = new String[(1)];
-			temp[0] = string;
-			return temp;
+			logger.info("文件为空");
+			return null;
 		}
-		
-		
 	}
-	
 }

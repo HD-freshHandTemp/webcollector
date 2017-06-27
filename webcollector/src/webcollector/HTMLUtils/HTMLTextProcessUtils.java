@@ -9,10 +9,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -29,7 +27,8 @@ import webcollector.IOUtils.FileUtils;
 import cn.edu.hfut.dmic.webcollector.model.Page;
 
 /**
- * 用于过滤无用信息以及格式化文本 提供对以下元素的处理 文字,表格,图片 如何去重?
+ * 用于过滤无用信息以及格式化文本 提供对以下元素的处理 文字,表格,图片
+ * 已实现基于MD5的文件去重
  * 
  * @author Mick Mo
  *
@@ -76,62 +75,59 @@ public class HTMLTextProcessUtils {
 	 * @param basePath basePath+Domain 
 	 * @throws IOException
 	 */
-	public static void ProcessHTMLCSS(ArrayList<Element> cssElements,String url,String basePath) throws IOException {
+	public static void ProcessHTMLCSS(Element cssElements,String url,String basePath) throws IOException {
 		// 获取页面CSS
-		if (cssElements!=null&&cssElements.size() > 0) {
+		if (cssElements!=null) {
 
 			Connection connect;
-
-			for (int i = 0;i<cssElements.size();i++) {
-				//检查要下载的是否为CSS文件
-				Element element = cssElements.get(i);
-				String href = element.attr("href");
-				
-				logger.info("准备下载:"+href);
-				String cssName = href.substring(href.lastIndexOf("/") + 1, href.length());
-				logger.info("CSS文件名称:"+cssName);
-				if (cssName.indexOf(".css") == -1){
-					logger.info("非CSS文件,"+cssName+"已被跳过");
-					cssElements.remove(i);
-					continue;
-				}
-				
-				
-				//构建css地址
-				//这里是临时处理,需要增加一个方法来判断,以匹配更多的网站类型
-				url = url.substring(0,url.lastIndexOf(".com")+4);
-				href = url +href;
-				logger.info("目标CSS地址:"+href);
-				
-				
-				
-				//下载CSS
-				connect = Jsoup.connect(href);
-				connect.userAgent("Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.15)");
-				connect.timeout(5000);
-				Document document = connect.get();
-				String cssText = document.text();
-				String charsetName = document.charset().toString();
-				cssText = document.text();
-				//检查是否空文件
-				if(cssText.length()<1){
-					logger.info("CSS文件内容为空,"+cssName+"已被跳过");
-					cssElements.remove(i);
-					continue;
-				}
-				
-				
-				//保存CSS
-				String localFilePath = "/"+basePath+"CSS/"+cssName;
-				logger.info("cssName:"+cssName);
-				logger.info("本地CSS路径:"+localFilePath);
-				logger.info("basePath:"+basePath);
-				URI localCssURI = FileUtils.saveBytesFile(cssText.getBytes(charsetName),localFilePath);
-				
-				//替换CSS
-				element.attr("href");
-				element.attr("href", localCssURI.toASCIIString());
+			String href = cssElements.attr("href");
+			
+			logger.info("准备下载:"+href);
+			String cssName = href.substring(href.lastIndexOf("/") + 1, href.length());
+			logger.info("CSS文件名称:"+cssName);
+			logger.info("CSS元素 HTML:"+cssElements.html());
+			logger.info("CSS元素 Text:"+cssElements.text());
+			logger.info("CSS元素长度:"+cssElements.html().length());
+			if (cssName.indexOf(".css") == -1){
+				logger.info("非CSS文件,"+cssName+"已被跳过");
+				return;
 			}
+			
+			
+			//构建css地址
+			//这里是临时处理,需要增加一个方法来判断,以匹配更多的网站类型
+			url = url.substring(0,url.lastIndexOf(".com")+4);
+			href = url +href;
+			logger.info("目标CSS地址:"+href);
+			
+			
+			
+			//下载CSS
+			connect = Jsoup.connect(href);
+			connect.userAgent("Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.15)");
+			connect.timeout(5000);
+			Document document = connect.get();
+			String cssText = document.text();
+			String charsetName = document.charset().toString();
+			cssText = document.text();
+			//检查是否空文件
+			if(cssText.length()<1){
+				logger.info("CSS文件内容为空,"+cssName+"已被跳过");
+				return;
+			}
+			
+			
+			//保存CSS
+			String localFilePath = "/"+basePath+"CSS/"+cssName;
+			logger.info("cssName:"+cssName);
+			logger.info("本地CSS路径:"+localFilePath);
+			logger.info("basePath:"+basePath);
+			URI localCssURI = FileUtils.saveBytesFile(cssText.getBytes(charsetName),localFilePath);
+			
+			//替换CSS
+			cssElements.attr("href");
+			cssElements.attr("href", localCssURI.toASCIIString());
+
 			logger.debug("CSS文件处理完毕");
 		}
 	}
@@ -296,32 +292,91 @@ public class HTMLTextProcessUtils {
 			try {
 				StringBuffer htmlData = new StringBuffer();
 				Set<Entry<String, Object>> entrySet = htmlComponentMap.entrySet();
-				for (Entry<String, Object> entry : entrySet) {
-					String key = entry.getKey();
-					Object value = entry.getValue();
-					if(key.equals("style")){
-						@SuppressWarnings("unchecked")
-						ArrayList<Element> elements = (ArrayList<Element>)value;
-						for (Element element : elements) {
-							htmlData.append(element.html());
-							logger.info("添加"+key+"元素,长度:"+element.html().length());
-						}
-					}else if(key.equals("css")){
-						@SuppressWarnings("unchecked")
-						ArrayList<Element> elements = (ArrayList<Element>)value;
-						for (Element element : elements) {
-							htmlData.append(element.html());
-							logger.info("添加"+key+"元素,长度:"+element.html().length());
-						}
-					}
-					else if(key.equals("title")||key.equals("summary")||key.equals("content")){
-						htmlData.append(((Element)value).html());
-						logger.info("添加"+key+"元素,长度:"+((Element)value).html().length());
-					}else {
-						logger.warn("无法识别的HTML结构:"+key+"  class:"+value.getClass());
-						continue;
+				
+				
+				ArrayList<Element> tempElements;
+				Element tempElement;
+				//保证顺序
+				String key = "style";
+				Object object = htmlComponentMap.get(key);
+				if(IsNullUtils.notNull(object)){
+					tempElements = (ArrayList<Element>)object;
+					for (Element element : tempElements) {
+						htmlData.append(element.html());
+						logger.info("添加"+key+"元素,长度:"+element.html().length());
 					}
 				}
+				
+				
+				key = "css";
+				object = htmlComponentMap.get(key);
+					if(IsNullUtils.notNull(object)){
+					tempElements = (ArrayList<Element>)object;
+					for (Element element : tempElements) {
+						//手动构建HTML代码
+						String cssElementString = "<link href=\""+element.attr("href")+"\" rel=\"stylesheet\" type=\"text/css\">";
+						htmlData.append(cssElementString);
+						logger.info("添加"+key+"元素,长度:"+cssElementString.length());
+					}
+					}
+				
+				
+				key = "title";
+				object = htmlComponentMap.get(key);
+				if(IsNullUtils.notNull(object)){
+					tempElement = (Element)object;
+					htmlData.append(tempElement.html());
+					logger.info("添加"+key+"元素,长度:"+tempElement.html().length());
+				}
+				
+				
+				key = "summary";
+				object = htmlComponentMap.get(key);
+				if(IsNullUtils.notNull(object)){
+					tempElement = (Element)object;
+					htmlData.append(tempElement.html());
+					logger.info("添加"+key+"元素,长度:"+tempElement.html().length());
+				}
+				
+				
+				
+				key = "content";
+				object = htmlComponentMap.get(key);
+				if(IsNullUtils.notNull(object)){
+					tempElement = (Element)object;
+					htmlData.append(tempElement.html());
+					logger.info("添加"+key+"元素,长度:"+tempElement.html().length());
+				}
+
+
+				
+				
+//				for (Entry<String, Object> entry : entrySet) {
+//					String key = entry.getKey();
+//					Object value = entry.getValue();
+//					if(key.equals("style")){
+//						@SuppressWarnings("unchecked")
+//						ArrayList<Element> elements = (ArrayList<Element>)value;
+//						for (Element element : elements) {
+//							htmlData.append(element.html());
+//							logger.info("添加"+key+"元素,长度:"+element.html().length());
+//						}
+//					}else if(key.equals("css")){
+//						@SuppressWarnings("unchecked")
+//						ArrayList<Element> elements = (ArrayList<Element>)value;
+//						for (Element element : elements) {
+//							htmlData.append(element.html());
+//							logger.info("添加"+key+"元素,长度:"+element.html().length());
+//						}
+//					}
+//					else if(key.equals("title")||key.equals("summary")||key.equals("content")){
+//						htmlData.append(((Element)value).html());
+//						logger.info("添加"+key+"元素,长度:"+((Element)value).html().length());
+//					}else {
+//						logger.warn("无法识别的HTML结构:"+key+"  class:"+value.getClass());
+//						continue;
+//					}
+//				}
 				return htmlData.toString().getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
